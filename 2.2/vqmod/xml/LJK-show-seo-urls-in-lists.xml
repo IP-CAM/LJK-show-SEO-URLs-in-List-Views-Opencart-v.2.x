@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <id>Show SEO URL's in lists</id>
+    <version>1.00</version>
+    <vqmver>2.X</vqmver>
+    <author>Lucas Krupinski - lucasjkr@me.com</author>
+    <comment></comment>
+
+    <file name="admin/controller/catalog/product.php">
+        <operation info="Add getSeoUrl function to class">
+            <search position="before"><![CDATA[public function autocomplete()]]></search>
+            <add><![CDATA[
+
+	public function getSeoUrl($product_id){
+	    $url_query = $this->db->query("select a.keyword
+                from oc_url_alias a
+                where concat('product_id=', " . $this->db->escape($product_id) . ") = a.query");
+        if($url_query->num_rows == 0) {
+            return '';
+        } else {
+            $url = $url_query->row;
+            return $url['keyword'];
+        }
+    }
+            ]]></add>
+        </operation>
+
+        <operation info="This should put the following code into the getList() function
+                specifically, it needs to occur within the `foreach ($results as $result)`">
+            <search position="before"><![CDATA[$special = false;]]></search>
+            <add><![CDATA[
+
+                if(!$this->getSeoUrl($result['product_id'])){
+                    $seo_url = '';
+                } else {
+                    $seo_url = $this->getSeoUrl($result['product_id']);
+                }
+
+                ]]></add>
+        </operation>
+
+        <operation info="Add SEO URL to the products array">
+            <search position="after"><![CDATA[$data['products'][] = array(]]></search>
+            <add><![CDATA[
+
+                'seo'        => $seo_url,
+
+                ]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/view/template/catalog/product_list.tpl">
+        <operation info="Add new column header to the admin/product list">
+            <search position="before"><![CDATA[<td class="text-right"><?php if ($sort == 'p.price') { ?>]]></search>
+            <add><![CDATA[
+
+            <td class="text-left">SEO URL</td>
+
+            ]]></add>
+        </operation>
+
+        <operation info="Add new column data to the admin/product list">
+            <search position="after"><![CDATA[echo $product['model']]]></search>
+            <add><![CDATA[
+
+                  <td class="text-left"><?php echo $product['seo']; ?></td>
+
+            ]]></add>
+        </operation>
+
+    </file>
+
+</modification>
