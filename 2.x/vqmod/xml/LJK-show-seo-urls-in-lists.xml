@@ -4,7 +4,7 @@
     <version>1.10</version>
     <vqmver>2.X</vqmver>
     <author>Lucas Krupinski - lucasjkr@me.com</author>
-    <comment></comment>
+    <comment>Tested and works properly on Opencart 2.2 and 2.3.0.2</comment>
 
     <file name="admin/model/catalog/product.php">
         <operation info="Begin commenting out old product query">
