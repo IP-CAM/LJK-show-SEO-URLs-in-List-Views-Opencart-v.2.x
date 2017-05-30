@@ -4,7 +4,14 @@
     <version>1.10</version>
     <vqmver>2.X</vqmver>
     <author>Lucas Krupinski - lucasjkr@me.com</author>
-    <comment>Tested and works properly on Opencart 2.2 and 2.3.0.2</comment>
+    <comment>
+        Version history:
+
+        1.0 = initial working version
+        1.1 = rewrite + sortable keyword column in product list view
+        1.2 = added sortable keyword column to manufacturer list view
+
+    </comment>
 
     <file name="admin/model/catalog/product.php">
         <operation info="Begin commenting out old product query">
@@ -49,8 +56,6 @@
         </operation>
     </file>
 
-
-
     <file name="admin/view/template/catalog/product_list.tpl">
         <operation info="Add new column header to the admin/product list">
             <search position="before"><![CDATA[<td class="text-right"><?php if ($sort == 'p.price') { ?>]]></search>
@@ -73,7 +78,66 @@
 
             ]]></add>
         </operation>
+    </file>
 
+
+
+    <file name="admin/model/catalog/manufacturer.php">
+        <operation info="Begin commenting out old product query">
+            <search position="replace"><![CDATA[$sql = "SELECT * FROM " . DB_PREFIX . "manufacturer";]]></search>
+            <add><![CDATA[
+        $sql = "SELECT *, ua.keyword FROM " . DB_PREFIX . "manufacturer LEFT JOIN " . DB_PREFIX . "url_alias ua ON CONCAT('manufacturer_id=', manufacturer_id) = ua.query";
+                ]]></add>
+        </operation>
+
+        <operation info="Add 'ua.keyword' to sort array">
+            <search position="after"><![CDATA[$sort_data = array(]]></search>
+            <add><![CDATA[
+            'keyword',]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/controller/catalog/manufacturer.php">
+        <operation info="Make 'keyword' a sortable column in the HTML table">
+            <search position="after"><![CDATA[$data['manufacturers'][] = array(]]></search>
+            <add><![CDATA[
+
+    'keyword' => $result['keyword'],
+            ]]></add>
+        </operation>
+
+        <operation info="Add keyword to sort array">
+            <search position="after"><![CDATA[$data['sort_sort_order']]]></search>
+            <add><![CDATA[
+
+		$data['sort_keyword'] = $this->url->link('catalog/manufacturer', 'token=' . $this->session->data['token'] . '&sort=keyword' . $url, true);
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/view/template/catalog/manufacturer_list.tpl">
+        <operation info="Add new column header to the admin/product list">
+            <search position="before"><![CDATA[<td class="text-right"><?php if ($sort == 'sort_order') { ?>]]></search>
+            <add><![CDATA[
+
+                  <td class="text-left"><?php if ($sort == 'keyword') { ?>
+                    <a href="<?php echo $sort_keyword; ?>" class="<?php echo strtolower($order); ?>">SEO Keyword</a>
+                    <?php } else { ?>
+                    <a href="<?php echo $sort_keyword; ?>">SEO Keyword</a>
+                    <?php } ?></td>
+
+            ]]></add>
+        </operation>
+
+        <operation info="Add new column data to the admin/product list">
+            <search position="before"><![CDATA[<td class="text-right"><?php echo $manufacturer['sort_order']; ?></td>]]></search>
+            <add><![CDATA[
+
+            <td class="text-right"><?php echo $manufacturer['keyword']; ?></td>
+
+            ]]></add>
+        </operation>
     </file>
 
 </modification>
