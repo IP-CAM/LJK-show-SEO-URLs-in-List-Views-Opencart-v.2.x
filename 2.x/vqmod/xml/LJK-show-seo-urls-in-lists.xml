@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <modification>
     <id>Show SEO URL's in lists</id>
-    <version>1.30</version>
+    <version>1.40</version>
     <vqmver>2.X</vqmver>
     <author>Lucas Krupinski - lucasjkr@me.com</author>
     <comment>
@@ -11,6 +11,7 @@
         1.1 = rewrite + sortable keyword column in product list view
         1.2 = added sortable keyword column to manufacturer list view
         1.3 = added sortable keyword column to category list view
+        1.4 = added sortable keyword column to the information list view
 
     </comment>
 
@@ -213,5 +214,75 @@
     </file>
     <!-- end category seo -->
 
+
+    <!-- begin information seo -->
+    <file name="admin/model/catalog/information.php">
+        <operation info="Begin commenting out old information query">
+            <search position="before"><![CDATA[$sql = "SELECT * FROM " . DB_PREFIX . "information]]></search>
+            <add><![CDATA[
+        /*
+                ]]></add>
+        </operation>
+
+        <operation info="End commenting out old information query and add new query">
+            <search position="after"><![CDATA[$sql = "SELECT * FROM " . DB_PREFIX . "information ]]></search>
+            <add><![CDATA[
+        */
+
+			$sql = "SELECT * FROM " . DB_PREFIX . "information i LEFT JOIN " . DB_PREFIX . "information_description id ON (i.information_id = id.information_id) LEFT JOIN " . DB_PREFIX . "url_alias ua ON CONCAT('information_id=', i.information_id) = ua.query WHERE id.language_id = '" . (int)$this->config->get('config_language_id') . "'";
+
+                ]]></add>
+        </operation>
+
+        <operation info="Add 'ua.keyword' to sort array">
+            <search position="after"><![CDATA[$sort_data = array(]]></search>
+            <add><![CDATA[
+            'ua.keyword',]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/controller/catalog/information.php">
+        <operation info="Make 'keyword' a sortable column in the HTML table">
+            <search position="after"><![CDATA[$data['informations'][] = array(]]></search>
+            <add><![CDATA[
+
+    'ua.keyword' => $result['keyword'],
+            ]]></add>
+        </operation>
+
+        <operation info="Add keyword to sort array">
+            <search position="after"><![CDATA[$data['sort_sort_order']]]></search>
+            <add><![CDATA[
+
+		$data['sort_keyword'] = $this->url->link('catalog/information', 'token=' . $this->session->data['token'] . '&sort=ua.keyword' . $url, true);
+
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="admin/view/template/catalog/information_list.tpl">
+        <operation info="Add new column header to the admin/category list">
+            <search position="before"><![CDATA[<td class="text-right"><?php if ($sort == 'i.sort_order') { ?>]]></search>
+            <add><![CDATA[
+
+                  <td class="text-left"><?php if ($sort == 'keyword') { ?>
+                    <a href="<?php echo $sort_keyword; ?>" class="<?php echo strtolower($order); ?>">SEO Keyword</a>
+                    <?php } else { ?>
+                    <a href="<?php echo $sort_keyword; ?>">SEO Keyword</a>
+                    <?php } ?></td>
+
+            ]]></add>
+        </operation>
+
+        <operation info="Add new column data to the admin/product list">
+            <search position="before"><![CDATA[<td class="text-right"><?php echo $information['sort_order']; ?></td>]]></search>
+            <add><![CDATA[
+
+            <td class="text-left"><?php echo $information['ua.keyword']; ?></td>
+
+            ]]></add>
+        </operation>
+    </file>
+    <!-- end information seo -->
 
 </modification>
